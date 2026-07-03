@@ -1,9 +1,9 @@
 CREATE TABLE repositories (
     id BIGINT PRIMARY KEY,
-    name VARCHAR(255),
+    name VARCHAR(255) NOT NULL,
     language VARCHAR(100),
-    stars INTEGER,
-    forks INTEGER,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
+    stars INTEGER NOT NULL,
+    forks INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
 );
