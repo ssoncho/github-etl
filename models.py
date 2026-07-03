@@ -20,4 +20,6 @@ repositories = Table(
     Column("forks", Integer, nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
+    Column("last_activity_days", Integer, nullable=False),
+    Column("popularity", String(50), nullable=False)
 )

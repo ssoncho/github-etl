@@ -5,5 +5,7 @@ CREATE TABLE repositories (
     stars INTEGER NOT NULL,
     forks INTEGER NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL
+    updated_at TIMESTAMPTZ NOT NULL,
+    last_activity_days INTEGER NOT NULL,
+    popularity VARCHAR(50) NOT NULL
 );
