@@ -1,8 +1,19 @@
 import requests
 from config import API_URL
+from sqlalchemy import select
+from db import engine
+from models import languages
+
+def get_language_map() -> dict[str, int]:
+    with engine.begin() as connection:
+        query = select(languages.c.id, languages.c.name)
+        result = connection.execute(query)
+        return {row.name: row.id for row in result}
 
 def send_get_request(url: str) -> list[dict]:
-    response = requests.get(url, timeout=10)
+    session = requests.Session()
+    session.trust_env = False
+    response = session.get(url, timeout=10)
     response.raise_for_status()
     return response.json()
 
