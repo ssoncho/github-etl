@@ -2,7 +2,7 @@ from pandas import DataFrame
 from sqlalchemy import Table
 
 from db import engine
-from models import languages, owners, repositories
+from models import issues, languages, owners, repositories
 
 
 def load_table(table: Table, df: DataFrame) -> None:
@@ -25,3 +25,7 @@ def load_languages(df: DataFrame) -> None:
 
 def load_repositories(df: DataFrame) -> None:
     load_table(repositories, df)
+
+
+def load_issues(df: DataFrame) -> None:
+    load_table(issues, df)

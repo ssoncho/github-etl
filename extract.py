@@ -2,7 +2,7 @@ import json
 import requests
 from datetime import datetime
 from pathlib import Path
-from config import API_URL
+from config import API_URL, GITHUB_TOKEN
 from sqlalchemy import select
 from db import engine
 from models import languages
@@ -10,12 +10,12 @@ from models import languages
 RAW_DIR = Path(__file__).parent / "raw"
 
 
-def save_raw_json(data: list[dict], owner: str) -> None:
+def save_raw_json(data: list[dict], owner: str, data_type: str = "repos") -> None:
     """Сохраняет сырой JSON-ответ от GitHub API."""
     RAW_DIR.mkdir(exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{owner}_repos_{timestamp}.json"
+    filename = f"{owner}_{data_type}_{timestamp}.json"
     filepath = RAW_DIR / filename
     
     with open(filepath, "w", encoding="utf-8") as f:
@@ -31,6 +31,7 @@ def get_language_map() -> dict[str, int]:
 def send_get_request(url: str) -> list[dict]:
     session = requests.Session()
     session.trust_env = False
+    session.headers.update({"Authorization": f"Bearer {GITHUB_TOKEN}"})
     response = session.get(url, timeout=10)
     response.raise_for_status()
     return response.json()
@@ -46,7 +47,18 @@ def get_repositories(owner: str) -> list[dict]:
     return response
 
 
-def extract(owner: str) -> list[dict]:
+def extract_repositories(owner: str) -> list[dict]:
     repositories = get_repositories(owner)
-    save_raw_json(repositories, owner)
+    #save_raw_json(repositories, owner)
     return repositories
+
+
+def get_issues_url(owner: str, repo: str) -> str:
+    return f"{API_URL}/repos/{owner}/{repo}/issues?state=all"
+
+
+def extract_issues(owner: str, repo: str) -> list[dict]:
+    url = get_issues_url(owner, repo)
+    issues = send_get_request(url)
+    #save_raw_json(issues, owner, f"issues_{repo}")
+    return issues

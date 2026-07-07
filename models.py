@@ -39,3 +39,15 @@ languages = Table(
     Column("id", Integer, primary_key=True),
     Column("name", String(100), nullable=False)
 )
+
+issues = Table(
+    "issues",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("repository_id", BigInteger, ForeignKey("repositories.id"), nullable=False),
+    Column("author_id", BigInteger, nullable=False),
+    Column("state", String(50), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    Column("closed_at", DateTime(timezone=True), nullable=True),
+)
