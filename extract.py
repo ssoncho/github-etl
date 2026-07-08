@@ -37,7 +37,7 @@ def send_get_request(url: str) -> list[dict]:
     return response.json()
 
 def get_repositories_url(owner: str) -> str:
-    return f"{API_URL}/orgs/{owner}/repos"
+    return f"{API_URL}/orgs/{owner}/repos?per_page=5" # TODO: увеличить число репозиториев
 
 
 def get_repositories(owner: str) -> list[dict]:
@@ -62,3 +62,14 @@ def extract_issues(owner: str, repo: str) -> list[dict]:
     issues = send_get_request(url)
     #save_raw_json(issues, owner, f"issues_{repo}")
     return issues
+
+
+def get_commits_url(owner: str, repo: str) -> str:
+    return f"{API_URL}/repos/{owner}/{repo}/commits"
+
+
+def extract_commits(owner: str, repo: str) -> list[dict]:
+    url = get_commits_url(owner, repo)
+    commits = send_get_request(url)
+    #save_raw_json(commits, owner, f"commits_{repo}")
+    return commits

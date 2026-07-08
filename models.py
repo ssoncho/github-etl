@@ -51,3 +51,11 @@ issues = Table(
     Column("updated_at", DateTime(timezone=True), nullable=False),
     Column("closed_at", DateTime(timezone=True), nullable=True),
 )
+
+commits = Table(
+    "commits",
+    metadata,
+    Column("sha", String(64), primary_key=True),
+    Column("repository_id", BigInteger, ForeignKey("repositories.id"), primary_key=True),
+    Column("committed_at", DateTime(timezone=True), nullable=False),
+)

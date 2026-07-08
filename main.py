@@ -1,12 +1,13 @@
 import pandas as pd
 
 from db import recreate_database
-from extract import extract_repositories, extract_issues, get_language_map
+from extract import extract_repositories, extract_issues, extract_commits, get_language_map
 from transform import (transform_owners, 
                        transform_languages, 
                        transform_repositories,
-                       transform_issues)
-from load import load_owners, load_languages, load_repositories, load_issues
+                       transform_issues,
+                       transform_commits)
+from load import load_owners, load_languages, load_repositories, load_issues, load_commits
 
 def main():
     recreate_database()
@@ -27,16 +28,25 @@ def main():
         language_map,
     )
     load_repositories(repositories_df)
+    print(f"Загружено {len(repositories_data)} репозиториев")
 
     # Получение и загрузка issues для каждого репозитория
     all_issues_dfs = []
+    all_commits_dfs = []
     for repo in repositories_data:
         repo_id = repo["id"]
         repo_name = repo["name"]
         issues_data = extract_issues(org_name, repo_name)
         if issues_data:
             issues_df = transform_issues(issues_data, repo_id)
-            all_issues_dfs.append(issues_df)
+            if not issues_df.empty:
+                all_issues_dfs.append(issues_df)
+
+        commits_data = extract_commits(org_name, repo_name)
+        if commits_data:
+            commits_df = transform_commits(commits_data, repo_id)
+            if not commits_df.empty:
+                all_commits_dfs.append(commits_df)
 
     if all_issues_dfs:
         combined_issues_df = pd.concat(all_issues_dfs, ignore_index=True)
@@ -45,7 +55,12 @@ def main():
     else:
         print("Issues не найдены")
 
-    print(f"Загружено {len(repositories_data)} репозиториев")
+    if all_commits_dfs:
+        combined_commits_df = pd.concat(all_commits_dfs, ignore_index=True)
+        load_commits(combined_commits_df)
+        print(f"Загружено {len(combined_commits_df)} commits")
+    else:
+        print("Commits не найдены")
 
 
 if __name__ == "__main__":

@@ -141,3 +141,20 @@ def transform_issues(issues: list[dict], repository_id: int) -> pd.DataFrame:
 
     return df.drop(columns=["user"])
 
+
+def transform_commits(commits: list[dict], repository_id: int) -> pd.DataFrame:
+    final_columns = ["sha", "repository_id", "committed_at"]
+    if not commits:
+        return pd.DataFrame(columns=final_columns)
+
+    df = pd.DataFrame(commits)
+
+    df = df[["sha", "commit"]]
+    df["repository_id"] = repository_id
+    df["committed_at"] = df["commit"].apply(
+        lambda commit: commit.get("committer", {}).get("date")
+    )
+    df["committed_at"] = pd.to_datetime(df["committed_at"], utc=True, errors="coerce")
+    df = df[df["committed_at"].notna()]
+
+    return df.drop(columns=["commit"])
