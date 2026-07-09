@@ -8,9 +8,16 @@ from transform import (transform_owners,
                        transform_issues,
                        transform_commits)
 from load import load_owners, load_languages, load_repositories, load_issues, load_commits
+from alembic.config import Config
+from alembic import command
+
+def run_migrations():
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
 
 def main():
-    recreate_database()
+    run_migrations()
+
     org_name = "microsoft"
 
     repositories_data = extract_repositories(org_name)
