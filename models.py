@@ -22,7 +22,6 @@ repositories = Table(
     Column("forks", Integer, nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
-    Column("last_activity_days", Integer, nullable=False),
     Column("popularity", String(50), nullable=False),
 )
 
@@ -30,14 +29,14 @@ owners = Table(
     "owners",
     metadata,
     Column("id", BigInteger, primary_key=True),
-    Column("name", String(255), nullable=False)
+    Column("name", String(255), nullable=False, unique=True)
 )
 
 languages = Table(
     "languages",
     metadata,
     Column("id", Integer, primary_key=True),
-    Column("name", String(100), nullable=False)
+    Column("name", String(100), nullable=False, unique=True)
 )
 
 issues = Table(
@@ -58,4 +57,11 @@ commits = Table(
     Column("sha", String(64), primary_key=True),
     Column("repository_id", BigInteger, ForeignKey("repositories.id"), primary_key=True),
     Column("committed_at", DateTime(timezone=True), nullable=False),
+)
+
+etl_state =  Table(
+    "etl_state",
+    metadata,
+    Column("entity", String(100), primary_key=True),
+    Column("last_loaded_at", DateTime(timezone=True), nullable=False)
 )

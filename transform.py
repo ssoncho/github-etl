@@ -1,8 +1,11 @@
-from datetime import timezone
+from datetime import timezone, datetime
 
 import pandas as pd
 
 def transform_owners(repositories: list[dict]) -> pd.DataFrame:
+    if not repositories:
+        return pd.DataFrame()
+    
     df = pd.DataFrame(repositories)
 
     owners_df = (
@@ -19,6 +22,9 @@ def transform_owners(repositories: list[dict]) -> pd.DataFrame:
 
 
 def transform_languages(repositories: list[dict]) -> pd.DataFrame:
+    if not repositories:
+        return pd.DataFrame()
+    
     df = pd.DataFrame(repositories)
 
     languages_df = (
@@ -38,6 +44,9 @@ def transform_repositories(
     repositories: list[dict],
     language_map: dict[str, int],
 ) -> pd.DataFrame:
+    if not repositories:
+        return pd.DataFrame()
+    
     df = pd.DataFrame(repositories)
 
     df = df[
@@ -64,11 +73,6 @@ def transform_repositories(
 
     df["created_at"] = pd.to_datetime(df["created_at"], utc=True)
     df["updated_at"] = pd.to_datetime(df["updated_at"], utc=True)
-    now = pd.Timestamp.now(timezone.utc)
-
-    df["last_activity_days"] = (
-        now - df["updated_at"].fillna(df["created_at"])
-    ).dt.days
 
     df["popularity"] = pd.cut(
         df["stars"],

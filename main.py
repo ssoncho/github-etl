@@ -1,15 +1,22 @@
 import pandas as pd
 
-from db import recreate_database
 from extract import extract_repositories, extract_issues, extract_commits, get_language_map
 from transform import (transform_owners, 
                        transform_languages, 
                        transform_repositories,
                        transform_issues,
                        transform_commits)
-from load import load_owners, load_languages, load_repositories, load_issues, load_commits
+from load import (
+    load_owners,
+    load_languages,
+    load_repositories,
+    load_issues,
+    load_commits,
+    mark_entity_loaded,
+)
 from alembic.config import Config
 from alembic import command
+from sqlalchemy import engine
 
 def run_migrations():
     alembic_cfg = Config("alembic.ini")
@@ -55,20 +62,17 @@ def main():
             if not commits_df.empty:
                 all_commits_dfs.append(commits_df)
 
+    combined_issues_df = pd.DataFrame()
     if all_issues_dfs:
         combined_issues_df = pd.concat(all_issues_dfs, ignore_index=True)
-        load_issues(combined_issues_df)
-        print(f"Загружено {len(combined_issues_df)} issues")
-    else:
-        print("Issues не найдены")
+    load_issues(combined_issues_df)
+    print(f"Загружено {len(combined_issues_df)} issues")
 
+    combined_commits_df = pd.DataFrame()
     if all_commits_dfs:
         combined_commits_df = pd.concat(all_commits_dfs, ignore_index=True)
-        load_commits(combined_commits_df)
-        print(f"Загружено {len(combined_commits_df)} commits")
-    else:
-        print("Commits не найдены")
-
+    load_commits(combined_commits_df)
+    print(f"Загружено {len(combined_commits_df)} commits")
 
 if __name__ == "__main__":
     main()
