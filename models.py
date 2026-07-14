@@ -63,5 +63,6 @@ etl_state =  Table(
     "etl_state",
     metadata,
     Column("entity", String(100), primary_key=True),
+    Column("owner_id", BigInteger, primary_key=True),
     Column("last_loaded_at", DateTime(timezone=True), nullable=False)
 )

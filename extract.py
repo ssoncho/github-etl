@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from config import API_URL, GITHUB_TOKEN
 from db import engine
-from models import etl_state, languages
+from models import etl_state, languages, owners
 
 RAW_DIR = Path(__file__).parent / "raw"
 
@@ -31,9 +31,14 @@ def get_language_map() -> dict[str, int]:
         return {row.name: row.id for row in result}
 
 
-def get_last_loaded_at(entity_name: str) -> datetime | None:
+def get_last_loaded_at(entity_name: str, owner: str) -> datetime | None:
     with engine.begin() as connection:
-        query = select(etl_state.c.last_loaded_at).where(etl_state.c.entity == entity_name)
+        owner_id = connection.execute(select(owners.c.id).where(owners.c.name == owner)) \
+                    .scalar_one_or_none()
+        if owner_id is None:
+            return None
+        query = select(etl_state.c.last_loaded_at) \
+            .where(etl_state.c.entity == entity_name, etl_state.c.owner_id == owner_id)
         return connection.execute(query).scalar_one_or_none()
 
 
@@ -79,7 +84,7 @@ def send_get_request(url: str, params: dict | None = None) -> list[dict]:
     session = requests.Session()
     session.trust_env = False
     session.headers.update({"Authorization": f"Bearer {GITHUB_TOKEN}"})
-    response = session.get(url, params=params, timeout=10)
+    response = session.get(url, params=params, timeout=30)
     response.raise_for_status()
     return response.json()
 
@@ -88,7 +93,7 @@ def get_repositories_url(owner: str) -> str:
     return f"{API_URL}/orgs/{owner}/repos?per_page=5&sort=updated"  # TODO: увеличить число репозиториев
 
 def extract_repositories(owner: str) -> list[dict]:
-    last_loaded_at = get_last_loaded_at("repositories")
+    last_loaded_at = get_last_loaded_at("repositories", owner)
     url = get_repositories_url(owner)
     repositories = send_get_request(url)
     repositories = filter_by_updated_at(repositories, last_loaded_at)
@@ -97,11 +102,11 @@ def extract_repositories(owner: str) -> list[dict]:
 
 
 def get_issues_url(owner: str, repo: str) -> str:
-    return f"{API_URL}/repos/{owner}/{repo}/issues?state=all"
+    return f"{API_URL}/repos/{owner}/{repo}/issues?state=all&per_page=100"
 
 
 def extract_issues(owner: str, repo: str) -> list[dict]:
-    last_loaded_at = get_last_loaded_at("issues")
+    last_loaded_at = get_last_loaded_at("issues", owner)
     url = get_issues_url(owner, repo)
     params = None
     if last_loaded_at is not None:
@@ -117,7 +122,7 @@ def get_commits_url(owner: str, repo: str) -> str:
 
 
 def extract_commits(owner: str, repo: str) -> list[dict]:
-    last_loaded_at = get_last_loaded_at("commits")
+    last_loaded_at = get_last_loaded_at("commits", owner)
     url = get_commits_url(owner, repo)
     params = None
     if last_loaded_at is not None:

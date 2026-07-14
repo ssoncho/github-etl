@@ -17,6 +17,7 @@ def transform_owners(repositories: list[dict]) -> pd.DataFrame:
             }
         )
     )
+    owners_df["name"] = owners_df["name"].str.lower()
 
     return owners_df
 

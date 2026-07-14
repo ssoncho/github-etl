@@ -1,5 +1,7 @@
 import pandas as pd
 
+from config import ORGANIZATIONS
+
 from extract import extract_repositories, extract_issues, extract_commits, get_language_map
 from transform import (transform_owners, 
                        transform_languages, 
@@ -12,11 +14,9 @@ from load import (
     load_repositories,
     load_issues,
     load_commits,
-    mark_entity_loaded,
 )
 from alembic.config import Config
 from alembic import command
-from sqlalchemy import engine
 
 def run_migrations():
     alembic_cfg = Config("alembic.ini")
@@ -25,54 +25,54 @@ def run_migrations():
 def main():
     run_migrations()
 
-    org_name = "microsoft"
+    for org in ORGANIZATIONS:
 
-    repositories_data = extract_repositories(org_name)
+        repositories_data = extract_repositories(org)
 
-    owners_df = transform_owners(repositories_data)
-    load_owners(owners_df)
+        owners_df = transform_owners(repositories_data)
+        load_owners(owners_df)
 
-    languages_df = transform_languages(repositories_data)
-    load_languages(languages_df)
+        languages_df = transform_languages(repositories_data)
+        load_languages(languages_df)
 
-    language_map = get_language_map()
+        language_map = get_language_map()
 
-    repositories_df = transform_repositories(
-        repositories_data,
-        language_map,
-    )
-    load_repositories(repositories_df)
-    print(f"Загружено {len(repositories_data)} репозиториев")
+        repositories_df = transform_repositories(
+            repositories_data,
+            language_map,
+        )
+        load_repositories(repositories_df, org_name=org)
+        print(f"{org}: Загружено {len(repositories_data)} репозиториев")
 
-    # Получение и загрузка issues для каждого репозитория
-    all_issues_dfs = []
-    all_commits_dfs = []
-    for repo in repositories_data:
-        repo_id = repo["id"]
-        repo_name = repo["name"]
-        issues_data = extract_issues(org_name, repo_name)
-        if issues_data:
-            issues_df = transform_issues(issues_data, repo_id)
-            if not issues_df.empty:
-                all_issues_dfs.append(issues_df)
+        # Получение и загрузка issues и commits для каждого репозитория
+        all_issues_dfs = []
+        all_commits_dfs = []
+        for repo in repositories_data:
+            repo_id = repo["id"]
+            repo_name = repo["name"]
+            issues_data = extract_issues(org, repo_name)
+            if issues_data:
+                issues_df = transform_issues(issues_data, repo_id)
+                if not issues_df.empty:
+                    all_issues_dfs.append(issues_df)
 
-        commits_data = extract_commits(org_name, repo_name)
-        if commits_data:
-            commits_df = transform_commits(commits_data, repo_id)
-            if not commits_df.empty:
-                all_commits_dfs.append(commits_df)
+            commits_data = extract_commits(org, repo_name)
+            if commits_data:
+                commits_df = transform_commits(commits_data, repo_id)
+                if not commits_df.empty:
+                    all_commits_dfs.append(commits_df)
 
-    combined_issues_df = pd.DataFrame()
-    if all_issues_dfs:
-        combined_issues_df = pd.concat(all_issues_dfs, ignore_index=True)
-    load_issues(combined_issues_df)
-    print(f"Загружено {len(combined_issues_df)} issues")
+        combined_issues_df = pd.DataFrame()
+        if all_issues_dfs:
+            combined_issues_df = pd.concat(all_issues_dfs, ignore_index=True)
+        load_issues(combined_issues_df, org_name=org)
+        print(f"{org}: Загружено {len(combined_issues_df)} issues")
 
-    combined_commits_df = pd.DataFrame()
-    if all_commits_dfs:
-        combined_commits_df = pd.concat(all_commits_dfs, ignore_index=True)
-    load_commits(combined_commits_df)
-    print(f"Загружено {len(combined_commits_df)} commits")
+        combined_commits_df = pd.DataFrame()
+        if all_commits_dfs:
+            combined_commits_df = pd.concat(all_commits_dfs, ignore_index=True)
+        load_commits(combined_commits_df, org_name=org)
+        print(f"{org}: Загружено {len(combined_commits_df)} commits")
 
 if __name__ == "__main__":
     main()
