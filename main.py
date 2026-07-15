@@ -16,15 +16,15 @@ from load import (
     load_issues,
     load_commits,
 )
-from alembic.config import Config
-from alembic import command
+# from alembic.config import Config
+# from alembic import command
 
-def run_migrations():
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
+# def run_migrations():
+#     alembic_cfg = Config("alembic.ini")
+#     command.upgrade(alembic_cfg, "head")
 
 def main():
-    run_migrations()
+    # run_migrations()
 
     for org in ORGANIZATIONS:
         owner_id = get_owner_id(org)
