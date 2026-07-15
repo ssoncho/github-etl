@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from config import API_URL, GITHUB_TOKEN
 from db import engine
-from models import etl_state, languages, owners
+from models import etl_state, languages, owners, repositories
 
 RAW_DIR = Path(__file__).parent / "raw"
 
@@ -29,6 +29,20 @@ def get_language_map() -> dict[str, int]:
         query = select(languages.c.id, languages.c.name)
         result = connection.execute(query)
         return {row.name: row.id for row in result}
+
+def get_owner_id(owner: str) -> int | None:
+    with engine.begin() as connection:
+        owner_id = connection.execute(select(owners.c.id).where(owners.c.name == owner)) \
+                    .scalar_one_or_none()
+    return owner_id
+
+def get_repository_ids(owner_id: int) -> set[int]:
+    with engine.begin() as connection:
+        result = connection.execute(
+            select(repositories.c.id)
+            .where(repositories.c.owner_id == owner_id)
+        )
+        return {row.id for row in result}
 
 
 def get_last_loaded_at(entity_name: str, owner: str) -> datetime | None:
@@ -105,11 +119,11 @@ def get_issues_url(owner: str, repo: str) -> str:
     return f"{API_URL}/repos/{owner}/{repo}/issues?state=all&per_page=100"
 
 
-def extract_issues(owner: str, repo: str) -> list[dict]:
+def extract_issues(owner: str, repo: str, is_new_repo: bool) -> list[dict]:
     last_loaded_at = get_last_loaded_at("issues", owner)
     url = get_issues_url(owner, repo)
     params = None
-    if last_loaded_at is not None:
+    if last_loaded_at is not None and not is_new_repo:
         params = {"since": format_github_since_param(last_loaded_at)}
 
     issues = send_get_request(url, params=params)
@@ -121,11 +135,11 @@ def get_commits_url(owner: str, repo: str) -> str:
     return f"{API_URL}/repos/{owner}/{repo}/commits"
 
 
-def extract_commits(owner: str, repo: str) -> list[dict]:
+def extract_commits(owner: str, repo: str, is_new_repo: bool) -> list[dict]:
     last_loaded_at = get_last_loaded_at("commits", owner)
     url = get_commits_url(owner, repo)
     params = None
-    if last_loaded_at is not None:
+    if last_loaded_at is not None and not is_new_repo:
         params = {"since": format_github_since_param(last_loaded_at)}
 
     commits = send_get_request(url, params=params)
