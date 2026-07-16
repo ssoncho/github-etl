@@ -28,6 +28,9 @@ services:
       postgres:
         condition: service_healthy
 
+    environment:
+      PYTHONUNBUFFERED: "1"
+
     env_file:
       - .env
 
