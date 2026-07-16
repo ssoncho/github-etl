@@ -8,8 +8,8 @@ from alembic import context
 # make repo root importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from config import DATABASE_URL
-from models import metadata as target_metadata
+from src.config import DATABASE_URL
+from src.database.models import metadata as target_metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -4,10 +4,9 @@ from pandas import DataFrame
 from sqlalchemy import Table, Connection
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy import select
+from ..database.models import etl_state, owners
+from ..database.db import engine
 
-from db import engine
-from models import commits, etl_state, issues, languages, owners, repositories
-        
 def load_table(
     table: Table,
     df: DataFrame,
@@ -59,55 +58,20 @@ def mark_entity_loaded(entity_name: str, connection: Connection, org_name: str) 
 
     connection.execute(upsert_statement)
 
-
-def load_owners(df: DataFrame) -> None:
+def _load_entity(
+    table: Table,
+    df: DataFrame,
+    conflict_columns: list[str],
+    entity_name: str | None = None,
+    org_name: str | None = None,
+) -> None:
     with engine.begin() as connection:
         load_table(
-            owners,
+            table,
             df,
-            conflict_columns=["name"],
-            connection=connection
+            conflict_columns=conflict_columns,
+            connection=connection,
         )
 
-
-def load_languages(df: DataFrame) -> None:
-    with engine.begin() as connection:
-        load_table(
-            languages,
-            df,
-            conflict_columns=["name"],
-            connection=connection
-        )
-
-
-def load_repositories(df: DataFrame, org_name: str) -> None:
-    with engine.begin() as connection:
-        load_table(
-            repositories,
-            df,
-            conflict_columns=["id"],
-            connection=connection
-        )
-        mark_entity_loaded("repositories", connection, org_name)
-
-
-def load_issues(df: DataFrame, org_name: str) -> None:
-    with engine.begin() as connection:
-        load_table(
-            issues,
-            df,
-            conflict_columns=["id"],
-            connection=connection
-        )
-        mark_entity_loaded("issues", connection, org_name)
-
-
-def load_commits(df: DataFrame, org_name: str) -> None:
-    with engine.begin() as connection:
-        load_table(
-            commits,
-            df,
-            conflict_columns=["sha", "repository_id"],
-            connection=connection
-        )
-        mark_entity_loaded("commits", connection, org_name)
+        if entity_name is not None:
+            mark_entity_loaded(entity_name, connection, org_name)

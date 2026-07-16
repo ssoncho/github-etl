@@ -1,5 +1,3 @@
-from datetime import timezone, datetime
-
 import pandas as pd
 
 def transform_owners(repositories: list[dict]) -> pd.DataFrame:

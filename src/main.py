@@ -1,15 +1,14 @@
 import pandas as pd
 
-from config import ORGANIZATIONS
-
-from extract import (extract_repositories, extract_issues, extract_commits, 
-                     get_language_map, get_owner_id, get_repository_ids)
-from transform import (transform_owners, 
+from .config import ORGANIZATIONS
+from .database.queries import get_owner_id, get_repository_ids, get_language_map
+from .extract.extract import extract_repositories, extract_issues, extract_commits
+from .transform.transform import (transform_owners, 
                        transform_languages, 
                        transform_repositories,
                        transform_issues,
                        transform_commits)
-from load import (
+from .load.load import (
     load_owners,
     load_languages,
     load_repositories,
